@@ -59,19 +59,20 @@ export function ApplicantListTable({ job, applications, pipeline, onStageChange 
           <TableHead>Applicant Name</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Applied On</TableHead>
-          <TableHead>Resume</TableHead> {/* Added Resume column */}
+          <TableHead>Resume</TableHead>
           <TableHead>Current Stage</TableHead>
           <TableHead>AI Screen</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {applications.map((app) => (
-          <TableRow key={app.id} className="hover:bg-muted/50">
-            <TableCell className="font-medium">{app.applicantName}</TableCell>
-            <TableCell>{app.applicantEmail}</TableCell>
-            <TableCell>{new Date(app.submissionDate).toLocaleDateString()}</TableCell>
-            <TableCell>
+        {applications.map((app) => {
+          const cells = [];
+          cells.push(<TableCell key="name" className="font-medium">{app.applicantName}</TableCell>);
+          cells.push(<TableCell key="email">{app.applicantEmail}</TableCell>);
+          cells.push(<TableCell key="appliedOn">{new Date(app.submissionDate).toLocaleDateString()}</TableCell>);
+          cells.push(
+            <TableCell key="resume">
               {app.resumeUrl ? (
                 <Button variant="outline" size="sm" onClick={() => handleViewResume(app.resumeUrl)}>
                   <Download className="mr-2 h-4 w-4" /> View
@@ -80,7 +81,9 @@ export function ApplicantListTable({ job, applications, pipeline, onStageChange 
                 <span className="text-xs text-muted-foreground">N/A</span>
               )}
             </TableCell>
-            <TableCell>
+          );
+          cells.push(
+            <TableCell key="stage">
               {pipeline ? (
                 <Select
                   value={app.currentStage}
@@ -101,7 +104,9 @@ export function ApplicantListTable({ job, applications, pipeline, onStageChange 
                 <Badge variant="secondary">{app.currentStage}</Badge>
               )}
             </TableCell>
-            <TableCell>
+          );
+          cells.push(
+            <TableCell key="aiScreen">
               {app.aiScreeningResult ? (
                 <Badge variant={app.aiScreeningResult.match ? 'default' : 'destructive'}>
                   {app.aiScreeningResult.match ? 'Match' : 'Mismatch'}
@@ -110,20 +115,22 @@ export function ApplicantListTable({ job, applications, pipeline, onStageChange 
                  <Badge variant="outline">Pending</Badge>
               )}
             </TableCell>
-            <TableCell className="text-right space-x-2">
-              {/* <Button variant="outline" size="icon" asChild title="View Applicant Details">
-                <Link href={`/admin/applicants/${app.applicantId}?jobId=${job.id}`}>
-                  <Eye className="h-4 w-4" />
-                </Link>
-              </Button> */}
+          );
+          cells.push(
+            <TableCell key="actions" className="text-right space-x-2">
                <Button variant="outline" size="sm" asChild title="AI Screener for this applicant">
                  <Link href={`/admin/jobs/${job.id}/screen?applicantId=${app.applicantId}`}>
                      <Bot className="h-4 w-4" />
                  </Link>
               </Button>
             </TableCell>
-          </TableRow>
-        ))}
+          );
+          return (
+            <TableRow key={app.id} className="hover:bg-muted/50">
+              {cells}
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
