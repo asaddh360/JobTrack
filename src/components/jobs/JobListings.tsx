@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -8,12 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'; // Added import
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+
+const ALL_LOCATIONS_VALUE = "_all_locations_";
 
 export function JobListings() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [locationFilter, setLocationFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState(''); // Empty string for initial placeholder state
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,7 +38,9 @@ export function JobListings() {
     return jobs.filter(job => {
       const matchesSearchTerm = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                 job.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesLocation = locationFilter ? job.location === locationFilter : true;
+      // If locationFilter is empty (initial state, placeholder showing) or ALL_LOCATIONS_VALUE, it matches all.
+      // Otherwise, it matches the specific location.
+      const matchesLocation = (!locationFilter || locationFilter === ALL_LOCATIONS_VALUE) ? true : job.location === locationFilter;
       return matchesSearchTerm && matchesLocation;
     });
   }, [jobs, searchTerm, locationFilter]);
@@ -61,7 +66,7 @@ export function JobListings() {
               <SelectValue placeholder="Filter by location" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Locations</SelectItem>
+              <SelectItem value={ALL_LOCATIONS_VALUE}>All Locations</SelectItem>
               {uniqueLocations.map(location => (
                 <SelectItem key={location} value={location}>{location}</SelectItem>
               ))}
