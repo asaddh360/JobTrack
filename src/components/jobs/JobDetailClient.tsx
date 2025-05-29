@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '../ui/skeleton';
+import Link from 'next/link'; // Added import
 
 interface JobDetailClientProps {
   job: Job;
@@ -32,7 +33,7 @@ export function JobDetailClient({ job }: JobDetailClientProps) {
 
   const handleApplicationSuccess = () => {
     setApplicationSubmitted(true);
-    setShowApplicationForm(false); 
+    setShowApplicationForm(false);
   };
   
   // Effect to automatically show form if redirected back from login with a specific flag or query param
