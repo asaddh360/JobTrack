@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,9 +16,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import type { Job } from "@/types";
+import type { Job, User } from "@/types";
 import { addApplication } from "@/lib/mock-data";
-import { Paperclip, Send } from "lucide-react";
+import { Paperclip, Send, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 const applicationFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -32,47 +34,61 @@ type ApplicationFormValues = z.infer<typeof applicationFormSchema>;
 
 interface ApplicationFormProps {
   job: Job;
+  applicant: User; // Current logged-in user
   onApplicationSuccess: () => void;
 }
 
-export function ApplicationForm({ job, onApplicationSuccess }: ApplicationFormProps) {
+export function ApplicationForm({ job, applicant, onApplicationSuccess }: ApplicationFormProps) {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationFormSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      resumeText: "",
-      coverLetter: "",
+      name: applicant.name || "",
+      email: applicant.email || "",
+      phone: applicant.phone || "",
+      resumeText: applicant.resumeText || "",
+      coverLetter: applicant.coverLetter || "",
     },
   });
 
   async function onSubmit(values: ApplicationFormValues) {
+    setIsLoading(true);
     try {
-      // In a real app, handle file upload for values.resume
-      // For now, we use resumeText
       const applicationData = {
         jobId: job.id,
-        applicantName: values.name,
+        applicantName: values.name, // Use form values, as user might update them for this specific application
         applicantEmail: values.email,
       };
-      const applicantData = {
-        name: values.name,
-        email: values.email,
+      // The `applicantData` for `addApplication` should be the core applicant details
+      // that might create or update an `Applicant` record in mock-data.
+      // Here, we pass the currently logged-in applicant's base details along with form-specific ones.
+      const applicantDetailsForMock = {
+        id: applicant.id, // existing ID
+        name: values.name, // use form value
+        email: values.email, // use form value
         phone: values.phone,
-        resumeText: values.resumeText,
+        resumeText: values.resumeText, // This specific resume text for this application
         coverLetter: values.coverLetter,
+        password: applicant.password, // existing password
+        isAdmin: applicant.isAdmin, // existing admin status
       };
       
-      await addApplication(applicationData, applicantData);
+      await addApplication(applicationData, applicantDetailsForMock);
 
       toast({
         title: "Application Submitted!",
         description: `Your application for ${job.title} has been received.`,
         variant: "default",
       });
-      form.reset();
+      form.reset({ // Reset with original applicant data or empty if preferred
+        name: applicant.name || "",
+        email: applicant.email || "",
+        phone: applicant.phone || "",
+        resumeText: applicant.resumeText || "",
+        coverLetter: applicant.coverLetter || "",
+      });
       onApplicationSuccess();
     } catch (error) {
       toast({
@@ -80,6 +96,8 @@ export function ApplicationForm({ job, onApplicationSuccess }: ApplicationFormPr
         description: "There was a problem submitting your application. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -181,11 +199,12 @@ export function ApplicationForm({ job, onApplicationSuccess }: ApplicationFormPr
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? "Submitting..." : "Apply Now"}
-          {!form.formState.isSubmitting && <Send className="ml-2 h-4 w-4" />}
+        <Button type="submit" className="w-full" disabled={isLoading || form.formState.isSubmitting}>
+          {isLoading || form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="ml-2 h-4 w-4" />}
+          {isLoading || form.formState.isSubmitting ? "Submitting..." : "Apply Now"}
         </Button>
       </form>
     </Form>
   );
 }
+

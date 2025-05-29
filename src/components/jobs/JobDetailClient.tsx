@@ -1,12 +1,16 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Job } from '@/types';
 import { ApplicationForm } from './ApplicationForm';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, MapPin, Briefcase, ListChecks, CheckCircle, ExternalLink } from 'lucide-react';
+import { CalendarClock, MapPin, Briefcase, ListChecks, CheckCircle, ExternalLink, LogIn } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '../ui/skeleton';
 
 interface JobDetailClientProps {
   job: Job;
@@ -15,15 +19,55 @@ interface JobDetailClientProps {
 export function JobDetailClient({ job }: JobDetailClientProps) {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
+  const { currentUser, isLoading: authLoading } = useAuth();
+  const router = useRouter();
 
   const handleApplyClick = () => {
-    setShowApplicationForm(true);
+    if (!currentUser) {
+      router.push(`/auth/signin?redirect=/jobs/${job.id}`);
+    } else {
+      setShowApplicationForm(true);
+    }
   };
 
   const handleApplicationSuccess = () => {
     setApplicationSubmitted(true);
-    setShowApplicationForm(false); // Optionally hide form after submission
+    setShowApplicationForm(false); 
   };
+  
+  // Effect to automatically show form if redirected back from login with a specific flag or query param
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    if (queryParams.get('apply') === 'true' && currentUser && !applicationSubmitted) {
+      setShowApplicationForm(true);
+      // Clean up query param
+      router.replace(`/jobs/${job.id}`, undefined);
+    }
+  }, [currentUser, job.id, router, applicationSubmitted]);
+
+
+  if (authLoading) {
+    return (
+        <div className="container py-8">
+            <Card className="mb-8 shadow-lg">
+                <CardHeader>
+                    <Skeleton className="h-8 w-3/4 mb-2" />
+                    <Skeleton className="h-6 w-1/2 mb-1" />
+                    <Skeleton className="h-5 w-1/3" />
+                </CardHeader>
+                <CardContent>
+                    <Skeleton className="h-5 w-1/4 mb-2" />
+                    <Skeleton className="h-20 w-full mb-4" />
+                    <Skeleton className="h-5 w-1/4 mb-2" />
+                    <Skeleton className="h-16 w-full" />
+                </CardContent>
+            </Card>
+            <div className="text-center">
+                <Skeleton className="h-12 w-32 mx-auto" />
+            </div>
+        </div>
+    )
+  }
 
   return (
     <div className="container py-8">
@@ -69,18 +113,18 @@ export function JobDetailClient({ job }: JobDetailClientProps) {
           <h2 className="text-2xl font-semibold text-green-700 mb-2">Application Submitted!</h2>
           <p className="text-green-600 mb-6">Thank you for applying for the {job.title} position. We will review your application and get back to you soon.</p>
           <Button asChild variant="outline">
-            <a href="/applications">View My Applications <ExternalLink className="ml-2 h-4 w-4" /></a>
+            <Link href="/applications">View My Applications <ExternalLink className="ml-2 h-4 w-4" /></Link>
           </Button>
         </div>
-      ) : showApplicationForm ? (
+      ) : showApplicationForm && currentUser ? (
         <div>
           <h2 className="text-2xl font-semibold mb-4 text-center">Apply for {job.title}</h2>
-          <ApplicationForm job={job} onApplicationSuccess={handleApplicationSuccess} />
+          <ApplicationForm job={job} applicant={currentUser} onApplicationSuccess={handleApplicationSuccess} />
         </div>
       ) : job.status === 'Open' ? (
          <div className="text-center">
             <Button onClick={handleApplyClick} size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                Apply Now
+                {currentUser ? "Apply Now" : <><LogIn className="mr-2 h-4 w-4"/>Sign In to Apply</> }
             </Button>
          </div>
       ) : (

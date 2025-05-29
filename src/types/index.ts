@@ -18,6 +18,8 @@ export interface Applicant {
   resumeUrl?: string; // URL to resume file or text content
   resumeText?: string; // For AI screening
   coverLetter?: string;
+  password?: string; // For simulated authentication
+  isAdmin?: boolean; // For admin role
 }
 
 export interface Application {
@@ -46,3 +48,6 @@ export interface Pipeline {
   name: string;
   stages: PipelineStage[]; // e.g., ['Application Received', 'Initial Screening', 'Interview', 'Offer', 'Hired']
 }
+
+// Add User type, which can be largely similar to Applicant for now
+export type User = Applicant;

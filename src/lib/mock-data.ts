@@ -1,4 +1,4 @@
-import type { Job, Applicant, Application, Pipeline } from '@/types';
+import type { Job, Applicant, Application, Pipeline, User } from '@/types';
 
 export const mockPipelines: Pipeline[] = [
   {
@@ -75,11 +75,21 @@ export const mockJobs: Job[] = [
   },
 ];
 
-export const mockApplicants: Applicant[] = [
+export let mockApplicants: Applicant[] = [
+  {
+    id: 'applicant-0',
+    name: 'Super Admin',
+    email: 'super', // Using username for email field for simplicity for this admin
+    password: 'P@k422@1', // WARNING: Storing plain text passwords is insecure. For demo only.
+    isAdmin: true,
+    resumeText: 'System Administrator.',
+  },
   {
     id: 'applicant-1',
     name: 'Alice Wonderland',
     email: 'alice@example.com',
+    password: 'password123',
+    isAdmin: false,
     resumeText: 'Experienced Frontend Developer with 5 years in React, Next.js, and TypeScript. Proven ability to deliver high-quality user interfaces. Familiar with Tailwind CSS.',
     coverLetter: 'I am very interested in the Frontend Developer position.',
   },
@@ -87,6 +97,8 @@ export const mockApplicants: Applicant[] = [
     id: 'applicant-2',
     name: 'Bob The Builder',
     email: 'bob@example.com',
+    password: 'password456',
+    isAdmin: false,
     resumeText: 'Skilled Backend Engineer specializing in Node.js and microservices architecture. Proficient in PostgreSQL and Docker containerization. 3 years of experience.',
     coverLetter: 'The Backend Developer role aligns perfectly with my skills.',
   },
@@ -94,6 +106,8 @@ export const mockApplicants: Applicant[] = [
     id: 'applicant-3',
     name: 'Charlie Brown',
     email: 'charlie@example.com',
+    password: 'password789',
+    isAdmin: false,
     resumeText: 'Aspiring UX Designer, proficient in Figma and passionate about user-centered design. Eager to learn and contribute.',
     coverLetter: 'I am excited about the UX Designer Internship opportunity.',
   },
@@ -101,12 +115,14 @@ export const mockApplicants: Applicant[] = [
     id: 'applicant-4',
     name: 'Diana Prince',
     email: 'diana@example.com',
+    password: 'password101',
+    isAdmin: false,
     resumeText: 'Senior Frontend Developer with expertise in Vue.js and Angular. Some experience with React.',
     coverLetter: 'Looking for challenging frontend roles.',
   }
 ];
 
-export const mockApplications: Application[] = [
+export let mockApplications: Application[] = [
   {
     id: 'app-1',
     jobId: 'job-1',
@@ -155,9 +171,45 @@ export const mockApplications: Application[] = [
   }
 ];
 
-// Basic CRUD operations for mock data (client-side simulation)
-// In a real app, these would be API calls.
+// Auth related mock functions
+export const loginUser = async (email: string, passwordIn: string): Promise<User | null> => {
+  return new Promise(resolve => setTimeout(() => {
+    const user = mockApplicants.find(u => u.email === email && u.password === passwordIn);
+    resolve(user || null);
+  }, 300));
+};
 
+export const registerUser = async (userData: Pick<User, 'name' | 'email' | 'password'>): Promise<User | null> => {
+  return new Promise(resolve => setTimeout(() => {
+    if (mockApplicants.some(u => u.email === userData.email)) {
+      resolve(null); // User already exists
+      return;
+    }
+    const newUser: User = {
+      id: `applicant-${Date.now()}`,
+      ...userData,
+      isAdmin: false, // Default to not admin
+      resumeText: '', // Initialize other fields as needed
+    };
+    mockApplicants.push(newUser);
+    resolve(newUser);
+  }, 300));
+};
+
+export const updateUserProfile = async (userId: string, updates: Partial<Pick<User, 'name' | 'email' | 'phone' | 'resumeText' | 'coverLetter'>>): Promise<User | null> => {
+  return new Promise(resolve => setTimeout(() => {
+    const userIndex = mockApplicants.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+      mockApplicants[userIndex] = { ...mockApplicants[userIndex], ...updates };
+      resolve(mockApplicants[userIndex]);
+    } else {
+      resolve(null);
+    }
+  }, 300));
+};
+
+
+// Basic CRUD operations for mock data (client-side simulation)
 export const getJobs = async (): Promise<Job[]> => {
   return new Promise(resolve => setTimeout(() => resolve(mockJobs), 500));
 };
@@ -187,16 +239,32 @@ export const getApplicationsForJob = async (jobId: string): Promise<Application[
 };
 
 export const getApplicationsForUser = async (userEmail: string): Promise<Application[]> => {
-  // Assuming user is identified by email for simplicity
   return new Promise(resolve => setTimeout(() => resolve(mockApplications.filter(app => app.applicantEmail === userEmail)), 300));
 };
 
 export const addApplication = async (applicationData: Omit<Application, 'id' | 'submissionDate' | 'currentStage' | 'statusHistory'>, applicantData: Omit<Applicant, 'id'>): Promise<Application> => {
   let applicant = mockApplicants.find(a => a.email === applicantData.email);
   if (!applicant) {
-    applicant = { ...applicantData, id: `applicant-${Date.now()}`};
+    // This case should ideally not happen if user is logged in to apply.
+    // If it does, it implies an anonymous application or a new user registration during application.
+    // For simplicity, we'll assume `applicantData` is complete for a new applicant if not found.
+    applicant = { 
+        id: `applicant-${Date.now()}`,
+        name: applicantData.name,
+        email: applicantData.email,
+        phone: applicantData.phone,
+        resumeText: applicantData.resumeText,
+        coverLetter: applicantData.coverLetter,
+        password: applicantData.password, // This should be handled by a proper signup flow
+        isAdmin: false,
+     };
     mockApplicants.push(applicant);
+  } else {
+    // Update existing applicant's details if provided (e.g. resumeText for this specific application)
+    applicant.resumeText = applicantData.resumeText || applicant.resumeText;
+    applicant.coverLetter = applicantData.coverLetter || applicant.coverLetter;
   }
+
 
   const newApplication: Application = {
     ...applicationData,
@@ -252,15 +320,6 @@ export const addAiScreeningResult = async (applicationId: string, screeningResul
   const appIndex = mockApplications.findIndex(app => app.id === applicationId);
   if (appIndex !== -1) {
     mockApplications[appIndex].aiScreeningResult = screeningResult;
-    // Optionally move to next stage after AI screening
-    // const pipeline = mockPipelines.find(p => p.id === mockJobs.find(j => j.id === mockApplications[appIndex].jobId)?.pipelineId);
-    // if (pipeline) {
-    //   const currentStageIndex = pipeline.stages.findIndex(s => s.name === mockApplications[appIndex].currentStage);
-    //   if (pipeline.stages[currentStageIndex]?.name === 'AI Screening' && pipeline.stages[currentStageIndex + 1]) {
-    //      mockApplications[appIndex].currentStage = pipeline.stages[currentStageIndex+1].name;
-    //      mockApplications[appIndex].statusHistory.push({ stage: mockApplications[appIndex].currentStage, date: new Date().toISOString(), notes: "Automatically moved after AI screening." });
-    //   }
-    // }
     return new Promise(resolve => setTimeout(() => resolve(mockApplications[appIndex]), 300));
   }
   return undefined;
