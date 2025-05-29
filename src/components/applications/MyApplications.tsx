@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import type { Application, Job, Pipeline } from '@/types';
-import { getApplicationsForUser, getJobById, getPipelineById } from '@/lib/mock-data'; // Assuming a function to get user applications
+import { getApplicationsForUser, getJobById, getPipelineById } from '@/lib/mock-data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, CheckCircle2, Hourglass, ListChecks, Send } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '../ui/button'; // Added import for Button
 
 const getStageIcon = (stageName: string) => {
   const lowerStage = stageName.toLowerCase();
@@ -23,8 +24,7 @@ const getStageIcon = (stageName: string) => {
 export function MyApplications() {
   const [applications, setApplications] = useState<Array<Application & { job?: Job, pipeline?: Pipeline }>>([]);
   const [loading, setLoading] = useState(true);
-  // Simulate a logged-in user. In a real app, this would come from auth.
-  const currentUserEmail = 'alice@example.com'; // Example, or 'bob@example.com'
+  const currentUserEmail = 'alice@example.com'; 
 
   useEffect(() => {
     async function fetchApplications() {
@@ -47,14 +47,13 @@ export function MyApplications() {
     if (!pipeline) return 0;
     const stageIndex = pipeline.stages.findIndex(s => s.name === currentStage);
     if (stageIndex === -1) return 0;
-    // Consider 'Rejected' as an end stage, but not necessarily 100% progress towards hiring.
     if (currentStage.toLowerCase().includes('hired')) return 100;
-    if (currentStage.toLowerCase().includes('rejected')) return 100; // Or a different visual representation
+    if (currentStage.toLowerCase().includes('rejected')) return 100; 
     
     const nonNegativeStages = pipeline.stages.filter(s => !s.name.toLowerCase().includes('rejected'));
     const currentNonNegativeStageIndex = nonNegativeStages.findIndex(s => s.name === currentStage);
 
-    if (currentNonNegativeStageIndex === -1) return (stageIndex + 1) / pipeline.stages.length * 100; // fallback if stage not in nonNegativeStages but exists
+    if (currentNonNegativeStageIndex === -1) return (stageIndex + 1) / pipeline.stages.length * 100;
 
     return ((currentNonNegativeStageIndex + 1) / nonNegativeStages.length) * 100;
   };
@@ -130,15 +129,7 @@ export function MyApplications() {
                     </li>
                   ))}
                 </ul>
-                {app.aiScreeningResult && (
-                    <div className="mt-3 p-3 bg-secondary/50 rounded-md">
-                        <h5 className="text-xs font-semibold text-secondary-foreground">AI Screening Note:</h5>
-                        <p className={`text-xs ${app.aiScreeningResult.match ? 'text-green-600' : 'text-red-600'}`}>
-                            {app.aiScreeningResult.match ? 'Potential Match: ' : 'Potential Mismatch: '}
-                            {app.aiScreeningResult.reason}
-                        </p>
-                    </div>
-                )}
+                {/* AI Screening Result Display Removed */}
               </CardContent>
             </Card>
           ))}

@@ -10,9 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '../ui/button';
-import Link from 'next/link';
-import { Bot } from 'lucide-react';
+// Removed Bot icon import as AI screener is removed
 
 interface AdminJobEditorProps {
   job: Job;
@@ -41,23 +39,20 @@ export function AdminJobEditor({ job: initialJob }: AdminJobEditorProps) {
     fetchJobData();
   }, [fetchJobData]);
   
-  useEffect(() => { // Keep job state in sync with initialJob prop if it changes
+  useEffect(() => { 
     setJob(initialJob);
   }, [initialJob]);
 
 
   const handleJobUpdate = async (updatedJobData: Job) => {
     try {
-      // The JobPostingForm returns a full Job object, but updateJob might expect specific structure.
-      // For mock, we assume it takes the full job object.
-      const savedJob = await updateJob({ ...job, ...updatedJobData }); // merge with existing job to keep ID and postedDate
+      const savedJob = await updateJob({ ...job, ...updatedJobData }); 
       if (savedJob) {
-        setJob(savedJob); // Update local state
+        setJob(savedJob); 
         toast({
           title: "Job Updated!",
           description: `The job "${savedJob.title}" has been successfully updated.`,
         });
-         // If pipelineId changed, refetch pipeline details
         if (savedJob.pipelineId !== pipeline?.id) {
             const newPipeline = await getPipelineById(savedJob.pipelineId);
             setPipeline(newPipeline);
@@ -81,6 +76,12 @@ export function AdminJobEditor({ job: initialJob }: AdminJobEditorProps) {
         app.id === applicationId ? { ...app, currentStage: newStage, statusHistory: [...app.statusHistory, {stage: newStage, date: new Date().toISOString()}] } : app
       )
     );
+    // Also update the source of truth (mock data)
+    const appToUpdate = applications.find(app => app.id === applicationId);
+    if (appToUpdate) {
+        // In a real app, this would be an API call
+        console.log(`Updating stage for ${appToUpdate.applicantName} to ${newStage} in mock data`);
+    }
   };
 
   return (
@@ -92,11 +93,7 @@ export function AdminJobEditor({ job: initialJob }: AdminJobEditorProps) {
             Applicants ({loading ? <Skeleton className="h-4 w-4 inline-block ml-1" /> : applications.length})
           </TabsTrigger>
         </TabsList>
-        <Button asChild variant="outline">
-            <Link href={`/admin/jobs/${job.id}/screen`}>
-                <Bot className="mr-2 h-4 w-4" /> AI Applicant Screener
-            </Link>
-        </Button>
+        {/* AI Screener Button Removed */}
       </div>
 
       <TabsContent value="details">

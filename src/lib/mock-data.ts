@@ -6,13 +6,12 @@ export const mockPipelines: Pipeline[] = [
     name: 'Standard Hiring Pipeline',
     stages: [
       { id: 's1', name: 'Application Received', order: 1 },
-      { id: 's2', name: 'AI Screening', order: 2 },
-      { id: 's3', name: 'HR Review', order: 3 },
-      { id: 's4', name: 'Technical Interview', order: 4 },
-      { id: 's5', name: 'Final Interview', order: 5 },
-      { id: 's6', name: 'Offer Extended', order: 6 },
-      { id: 's7', name: 'Hired', order: 7 },
-      { id: 's8', name: 'Rejected', order: 8 },
+      { id: 's3', name: 'HR Review', order: 2 },
+      { id: 's4', name: 'Technical Interview', order: 3 },
+      { id: 's5', name: 'Final Interview', order: 4 },
+      { id: 's6', name: 'Offer Extended', order: 5 },
+      { id: 's7', name: 'Hired', order: 6 },
+      { id: 's8', name: 'Rejected', order: 7 }, // Catch-all for rejections
     ],
   },
   {
@@ -110,7 +109,6 @@ export let mockApplicants: Applicant[] = [
     password: 'password789',
     isAdmin: false,
     resumeText: 'Aspiring UX Designer, proficient in Figma and passionate about user-centered design. Eager to learn and contribute.',
-    // No resumeUrl initially for Charlie
   },
   {
     id: 'applicant-4',
@@ -131,15 +129,11 @@ export let mockApplications: Application[] = [
     applicantName: 'Alice Wonderland',
     applicantEmail: 'alice@example.com',
     submissionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    currentStage: 'AI Screening',
+    currentStage: 'HR Review', // Updated from 'AI Screening'
     statusHistory: [
       { stage: 'Application Received', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
-      { stage: 'AI Screening', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+      { stage: 'HR Review', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() }, // Updated from 'AI Screening'
     ],
-    aiScreeningResult: {
-      match: true,
-      reason: "Strong match for required skills: React, Next.js, TypeScript, Tailwind CSS.",
-    },
     resumeUrl: 'alice_wonderland_resume.pdf' 
   },
   {
@@ -162,15 +156,11 @@ export let mockApplications: Application[] = [
     applicantName: 'Diana Prince',
     applicantEmail: 'diana@example.com',
     submissionDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    currentStage: 'AI Screening',
+    currentStage: 'HR Review', // Updated from 'AI Screening'
     statusHistory: [
         { stage: 'Application Received', date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
-        { stage: 'AI Screening', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
+        { stage: 'HR Review', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() }, // Updated from 'AI Screening'
     ],
-    aiScreeningResult: {
-        match: false,
-        reason: "Primary experience in Vue.js and Angular, not React/Next.js as required.",
-    },
     resumeUrl: 'diana_prince_frontend_cv.pdf'
   }
 ];
@@ -273,14 +263,13 @@ export const addApplication = async (
   let applicant = mockApplicants.find(a => a.id === applicantDetails.id);
 
   if (!applicant) {
-    // Should not happen if user is logged in, but as a fallback:
     applicant = { 
-        id: applicantDetails.id || `applicant-${Date.now()}`, // Use existing ID or create new
+        id: applicantDetails.id || `applicant-${Date.now()}`, 
         name: applicantDetails.name,
         email: applicantDetails.email,
         phone: applicantDetails.phone,
         resumeText: applicantDetails.resumeText,
-        resumeUrl: applicantDetails.resumeFileName, // Store resume filename
+        resumeUrl: applicantDetails.resumeFileName, 
         password: applicantDetails.password,
         isAdmin: applicantDetails.isAdmin,
      };
@@ -291,13 +280,12 @@ export const addApplication = async (
         mockApplicants.push(applicant);
     }
   } else {
-    // Update existing applicant's details
     applicant.name = applicantDetails.name;
-    applicant.email = applicantDetails.email; // Assuming email might be updated in form
+    applicant.email = applicantDetails.email; 
     applicant.phone = applicantDetails.phone;
     applicant.resumeText = applicantDetails.resumeText;
     if (applicantDetails.resumeFileName) {
-      applicant.resumeUrl = applicantDetails.resumeFileName; // Update resume filename
+      applicant.resumeUrl = applicantDetails.resumeFileName;
     }
   }
 
@@ -312,7 +300,7 @@ export const addApplication = async (
     submissionDate: new Date().toISOString(),
     currentStage: initialStage,
     statusHistory: [{ stage: initialStage, date: new Date().toISOString() }],
-    resumeUrl: applicant.resumeUrl, // Carry over the resume URL to the application object
+    resumeUrl: applicant.resumeUrl, 
   };
   mockApplications.push(newApplication);
   return new Promise(resolve => setTimeout(() => resolve(newApplication), 300));
@@ -355,12 +343,3 @@ export const updatePipeline = async (pipeline: Pipeline): Promise<Pipeline | und
   }
   return undefined;
 }
-
-export const addAiScreeningResult = async (applicationId: string, screeningResult: Application['aiScreeningResult']): Promise<Application | undefined> => {
-  const appIndex = mockApplications.findIndex(app => app.id === applicationId);
-  if (appIndex !== -1) {
-    mockApplications[appIndex].aiScreeningResult = screeningResult;
-    return new Promise(resolve => setTimeout(() => resolve(mockApplications[appIndex]), 300));
-  }
-  return undefined;
-};

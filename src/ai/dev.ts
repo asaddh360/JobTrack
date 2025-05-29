@@ -1,4 +1,4 @@
 import { config } from 'dotenv';
 config();
 
-import '@/ai/flows/applicant-screener.ts';
+// Removed import for applicant-screener.ts

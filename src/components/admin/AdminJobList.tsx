@@ -7,7 +7,7 @@ import { getJobs, getApplicationsForJob } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { PlusCircle, Edit3, Users, BarChart, Bot } from 'lucide-react';
+import { PlusCircle, Edit3, Users } from 'lucide-react'; // Removed Bot, BarChart icons
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -108,12 +108,7 @@ export function AdminJobList() {
                         <span className="sr-only">Edit</span>
                       </Link>
                     </Button>
-                    <Button variant="outline" size="sm" asChild title="AI Screener">
-                        <Link href={`/admin/jobs/${job.id}/screen`}>
-                            <Bot className="h-4 w-4" />
-                            <span className="sr-only">AI Screen</span>
-                        </Link>
-                    </Button>
+                    {/* AI Screen Button Removed */}
                   </TableCell>
                 </TableRow>
               ))}
