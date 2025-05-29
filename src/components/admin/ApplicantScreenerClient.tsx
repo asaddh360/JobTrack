@@ -13,6 +13,7 @@ import { getJobById, getApplicationsForJob, getApplicantById, addAiScreeningResu
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '../ui/scroll-area';
+import { Input } from '@/components/ui/input'; // Added import
 
 interface ApplicantScreenerClientProps {
   jobId: string;
