@@ -25,9 +25,9 @@ const applicationFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Invalid email address."),
   phone: z.string().optional(),
-  resume: z.any().refine(files => files?.length === 1, "Resume is required.").optional(), // For simplicity, make optional if no actual upload
+  resume: z.any().refine(files => files?.length === 1, "Resume is required.").optional(),
   resumeText: z.string().min(50, "Resume content must be at least 50 characters."),
-  coverLetter: z.string().min(20, "Cover letter must be at least 20 characters.").optional(),
+  // coverLetter: z.string().min(20, "Cover letter must be at least 20 characters.").optional(), // Removed
 });
 
 type ApplicationFormValues = z.infer<typeof applicationFormSchema>;
@@ -49,7 +49,7 @@ export function ApplicationForm({ job, applicant, onApplicationSuccess }: Applic
       email: applicant.email || "",
       phone: applicant.phone || "",
       resumeText: applicant.resumeText || "",
-      coverLetter: applicant.coverLetter || "",
+      // coverLetter: applicant.coverLetter || "", // Removed
     },
   });
 
@@ -58,21 +58,24 @@ export function ApplicationForm({ job, applicant, onApplicationSuccess }: Applic
     try {
       const applicationData = {
         jobId: job.id,
-        applicantName: values.name, // Use form values, as user might update them for this specific application
+        applicantName: values.name,
         applicantEmail: values.email,
       };
-      // The `applicantData` for `addApplication` should be the core applicant details
-      // that might create or update an `Applicant` record in mock-data.
-      // Here, we pass the currently logged-in applicant's base details along with form-specific ones.
+
+      let resumeFileName: string | undefined = undefined;
+      if (values.resume && values.resume.length > 0) {
+        resumeFileName = values.resume[0].name;
+      }
+      
       const applicantDetailsForMock = {
-        id: applicant.id, // existing ID
-        name: values.name, // use form value
-        email: values.email, // use form value
+        id: applicant.id,
+        name: values.name,
+        email: values.email,
         phone: values.phone,
-        resumeText: values.resumeText, // This specific resume text for this application
-        coverLetter: values.coverLetter,
-        password: applicant.password, // existing password
-        isAdmin: applicant.isAdmin, // existing admin status
+        resumeText: values.resumeText,
+        resumeFileName: resumeFileName, // Pass resume filename
+        password: applicant.password,
+        isAdmin: applicant.isAdmin,
       };
       
       await addApplication(applicationData, applicantDetailsForMock);
@@ -82,12 +85,12 @@ export function ApplicationForm({ job, applicant, onApplicationSuccess }: Applic
         description: `Your application for ${job.title} has been received.`,
         variant: "default",
       });
-      form.reset({ // Reset with original applicant data or empty if preferred
+      form.reset({ 
         name: applicant.name || "",
         email: applicant.email || "",
         phone: applicant.phone || "",
         resumeText: applicant.resumeText || "",
-        coverLetter: applicant.coverLetter || "",
+        resume: undefined, // Reset file input
       });
       onApplicationSuccess();
     } catch (error) {
@@ -153,7 +156,7 @@ export function ApplicationForm({ job, applicant, onApplicationSuccess }: Applic
                 <div className="relative">
                   <Input 
                     type="file" 
-                    accept=".pdf,.doc,.docx,.txt" 
+                    accept=".pdf,.doc,.docx" 
                     onChange={(e) => field.onChange(e.target.files)}
                     className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                   />
@@ -161,7 +164,7 @@ export function ApplicationForm({ job, applicant, onApplicationSuccess }: Applic
                 </div>
               </FormControl>
               <FormMessage />
-              <p className="text-xs text-muted-foreground mt-1">For AI screening, please also paste resume content below.</p>
+              <p className="text-xs text-muted-foreground mt-1">Upload PDF, DOC, or DOCX. For AI screening, please also paste resume content below.</p>
             </FormItem>
           )}
         />
@@ -182,23 +185,7 @@ export function ApplicationForm({ job, applicant, onApplicationSuccess }: Applic
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="coverLetter"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Cover Letter (Optional)</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Tell us why you're a great fit for this role..."
-                  className="min-h-[120px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Cover Letter Field Removed */}
         <Button type="submit" className="w-full" disabled={isLoading || form.formState.isSubmitting}>
           {isLoading || form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="ml-2 h-4 w-4" />}
           {isLoading || form.formState.isSubmitting ? "Submitting..." : "Apply Now"}
@@ -207,4 +194,3 @@ export function ApplicationForm({ job, applicant, onApplicationSuccess }: Applic
     </Form>
   );
 }
-

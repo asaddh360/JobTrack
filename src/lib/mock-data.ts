@@ -79,10 +79,11 @@ export let mockApplicants: Applicant[] = [
   {
     id: 'applicant-0',
     name: 'Super Admin',
-    email: 'super', // Using username for email field for simplicity for this admin
-    password: 'P@k422@1', // WARNING: Storing plain text passwords is insecure. For demo only.
+    email: 'super', 
+    password: 'P@k422@1',
     isAdmin: true,
     resumeText: 'System Administrator.',
+    resumeUrl: 'super_admin_cv.pdf'
   },
   {
     id: 'applicant-1',
@@ -91,7 +92,7 @@ export let mockApplicants: Applicant[] = [
     password: 'password123',
     isAdmin: false,
     resumeText: 'Experienced Frontend Developer with 5 years in React, Next.js, and TypeScript. Proven ability to deliver high-quality user interfaces. Familiar with Tailwind CSS.',
-    coverLetter: 'I am very interested in the Frontend Developer position.',
+    resumeUrl: 'alice_wonderland_resume.pdf',
   },
   {
     id: 'applicant-2',
@@ -100,7 +101,7 @@ export let mockApplicants: Applicant[] = [
     password: 'password456',
     isAdmin: false,
     resumeText: 'Skilled Backend Engineer specializing in Node.js and microservices architecture. Proficient in PostgreSQL and Docker containerization. 3 years of experience.',
-    coverLetter: 'The Backend Developer role aligns perfectly with my skills.',
+    resumeUrl: 'bob_builder_cv.docx',
   },
   {
     id: 'applicant-3',
@@ -109,7 +110,7 @@ export let mockApplicants: Applicant[] = [
     password: 'password789',
     isAdmin: false,
     resumeText: 'Aspiring UX Designer, proficient in Figma and passionate about user-centered design. Eager to learn and contribute.',
-    coverLetter: 'I am excited about the UX Designer Internship opportunity.',
+    // No resumeUrl initially for Charlie
   },
   {
     id: 'applicant-4',
@@ -118,7 +119,7 @@ export let mockApplicants: Applicant[] = [
     password: 'password101',
     isAdmin: false,
     resumeText: 'Senior Frontend Developer with expertise in Vue.js and Angular. Some experience with React.',
-    coverLetter: 'Looking for challenging frontend roles.',
+    resumeUrl: 'diana_prince_frontend_cv.pdf',
   }
 ];
 
@@ -129,7 +130,7 @@ export let mockApplications: Application[] = [
     applicantId: 'applicant-1',
     applicantName: 'Alice Wonderland',
     applicantEmail: 'alice@example.com',
-    submissionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    submissionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     currentStage: 'AI Screening',
     statusHistory: [
       { stage: 'Application Received', date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
@@ -138,7 +139,8 @@ export let mockApplications: Application[] = [
     aiScreeningResult: {
       match: true,
       reason: "Strong match for required skills: React, Next.js, TypeScript, Tailwind CSS.",
-    }
+    },
+    resumeUrl: 'alice_wonderland_resume.pdf' 
   },
   {
     id: 'app-2',
@@ -146,11 +148,12 @@ export let mockApplications: Application[] = [
     applicantId: 'applicant-2',
     applicantName: 'Bob The Builder',
     applicantEmail: 'bob@example.com',
-    submissionDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+    submissionDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     currentStage: 'Application Received',
     statusHistory: [
       { stage: 'Application Received', date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
     ],
+    resumeUrl: 'bob_builder_cv.docx'
   },
   {
     id: 'app-3',
@@ -167,7 +170,8 @@ export let mockApplications: Application[] = [
     aiScreeningResult: {
         match: false,
         reason: "Primary experience in Vue.js and Angular, not React/Next.js as required.",
-    }
+    },
+    resumeUrl: 'diana_prince_frontend_cv.pdf'
   }
 ];
 
@@ -188,19 +192,21 @@ export const registerUser = async (userData: Pick<User, 'name' | 'email' | 'pass
     const newUser: User = {
       id: `applicant-${Date.now()}`,
       ...userData,
-      isAdmin: false, // Default to not admin
-      resumeText: '', // Initialize other fields as needed
+      isAdmin: false, 
+      resumeText: '', 
     };
     mockApplicants.push(newUser);
     resolve(newUser);
   }, 300));
 };
 
-export const updateUserProfile = async (userId: string, updates: Partial<Pick<User, 'name' | 'email' | 'phone' | 'resumeText' | 'coverLetter'>>): Promise<User | null> => {
+export const updateUserProfile = async (userId: string, updates: Partial<Pick<User, 'name' | 'email' | 'phone' | 'resumeText' | 'resumeUrl'>>): Promise<User | null> => {
   return new Promise(resolve => setTimeout(() => {
     const userIndex = mockApplicants.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
-      mockApplicants[userIndex] = { ...mockApplicants[userIndex], ...updates };
+      // Prevent email update through this general profile update for simplicity
+      const { email, ...safeUpdates } = updates;
+      mockApplicants[userIndex] = { ...mockApplicants[userIndex], ...safeUpdates };
       resolve(mockApplicants[userIndex]);
     } else {
       resolve(null);
@@ -233,46 +239,80 @@ export const updateJob = async (job: Job): Promise<Job | undefined> => {
   return undefined;
 };
 
+const enrichApplicationWithResumeUrl = (app: Application): Application => {
+  const applicant = mockApplicants.find(a => a.id === app.applicantId);
+  return {
+    ...app,
+    resumeUrl: applicant?.resumeUrl,
+  };
+};
 
 export const getApplicationsForJob = async (jobId: string): Promise<Application[]> => {
-  return new Promise(resolve => setTimeout(() => resolve(mockApplications.filter(app => app.jobId === jobId)), 300));
+  return new Promise(resolve => setTimeout(() => {
+    const apps = mockApplications
+      .filter(app => app.jobId === jobId)
+      .map(enrichApplicationWithResumeUrl);
+    resolve(apps);
+  }, 300));
 };
 
 export const getApplicationsForUser = async (userEmail: string): Promise<Application[]> => {
-  return new Promise(resolve => setTimeout(() => resolve(mockApplications.filter(app => app.applicantEmail === userEmail)), 300));
+  return new Promise(resolve => setTimeout(() => {
+    const apps = mockApplications
+      .filter(app => app.applicantEmail === userEmail)
+      .map(enrichApplicationWithResumeUrl);
+    resolve(apps);
+  }, 300));
 };
 
-export const addApplication = async (applicationData: Omit<Application, 'id' | 'submissionDate' | 'currentStage' | 'statusHistory'>, applicantData: Omit<Applicant, 'id'>): Promise<Application> => {
-  let applicant = mockApplicants.find(a => a.email === applicantData.email);
+export const addApplication = async (
+  applicationData: Omit<Application, 'id' | 'submissionDate' | 'currentStage' | 'statusHistory' | 'resumeUrl'>,
+  applicantDetails: Pick<Applicant, 'id' | 'name' | 'email' | 'phone' | 'resumeText' | 'password' | 'isAdmin'> & { resumeFileName?: string }
+): Promise<Application> => {
+  
+  let applicant = mockApplicants.find(a => a.id === applicantDetails.id);
+
   if (!applicant) {
-    // This case should ideally not happen if user is logged in to apply.
-    // If it does, it implies an anonymous application or a new user registration during application.
-    // For simplicity, we'll assume `applicantData` is complete for a new applicant if not found.
+    // Should not happen if user is logged in, but as a fallback:
     applicant = { 
-        id: `applicant-${Date.now()}`,
-        name: applicantData.name,
-        email: applicantData.email,
-        phone: applicantData.phone,
-        resumeText: applicantData.resumeText,
-        coverLetter: applicantData.coverLetter,
-        password: applicantData.password, // This should be handled by a proper signup flow
-        isAdmin: false,
+        id: applicantDetails.id || `applicant-${Date.now()}`, // Use existing ID or create new
+        name: applicantDetails.name,
+        email: applicantDetails.email,
+        phone: applicantDetails.phone,
+        resumeText: applicantDetails.resumeText,
+        resumeUrl: applicantDetails.resumeFileName, // Store resume filename
+        password: applicantDetails.password,
+        isAdmin: applicantDetails.isAdmin,
      };
-    mockApplicants.push(applicant);
+    const existingApplicantIndex = mockApplicants.findIndex(a => a.id === applicant!.id);
+    if (existingApplicantIndex > -1) {
+        mockApplicants[existingApplicantIndex] = applicant;
+    } else {
+        mockApplicants.push(applicant);
+    }
   } else {
-    // Update existing applicant's details if provided (e.g. resumeText for this specific application)
-    applicant.resumeText = applicantData.resumeText || applicant.resumeText;
-    applicant.coverLetter = applicantData.coverLetter || applicant.coverLetter;
+    // Update existing applicant's details
+    applicant.name = applicantDetails.name;
+    applicant.email = applicantDetails.email; // Assuming email might be updated in form
+    applicant.phone = applicantDetails.phone;
+    applicant.resumeText = applicantDetails.resumeText;
+    if (applicantDetails.resumeFileName) {
+      applicant.resumeUrl = applicantDetails.resumeFileName; // Update resume filename
+    }
   }
 
+  const job = mockJobs.find(j=>j.id === applicationData.jobId);
+  const pipeline = job ? mockPipelines.find(p => p.id === job.pipelineId) : undefined;
+  const initialStage = pipeline?.stages[0]?.name || 'Application Received';
 
   const newApplication: Application = {
     ...applicationData,
     id: `app-${Date.now()}`,
     applicantId: applicant.id,
     submissionDate: new Date().toISOString(),
-    currentStage: mockPipelines.find(p => p.id === mockJobs.find(j=>j.id === applicationData.jobId)?.pipelineId)?.stages[0]?.name || 'Application Received',
-    statusHistory: [{ stage: mockPipelines.find(p => p.id === mockJobs.find(j=>j.id === applicationData.jobId)?.pipelineId)?.stages[0]?.name || 'Application Received', date: new Date().toISOString() }],
+    currentStage: initialStage,
+    statusHistory: [{ stage: initialStage, date: new Date().toISOString() }],
+    resumeUrl: applicant.resumeUrl, // Carry over the resume URL to the application object
   };
   mockApplications.push(newApplication);
   return new Promise(resolve => setTimeout(() => resolve(newApplication), 300));

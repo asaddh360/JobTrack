@@ -15,9 +15,9 @@ export interface Applicant {
   name: string;
   email: string;
   phone?: string;
-  resumeUrl?: string; // URL to resume file or text content
+  resumeUrl?: string; // URL to resume file or filename
   resumeText?: string; // For AI screening
-  coverLetter?: string;
+  // coverLetter?: string; // Removed
   password?: string; // For simulated authentication
   isAdmin?: boolean; // For admin role
 }
@@ -25,7 +25,7 @@ export interface Applicant {
 export interface Application {
   id:string;
   jobId: string;
-  applicantId: string; // Could be embedded Applicant details
+  applicantId: string; 
   applicantName: string;
   applicantEmail: string;
   submissionDate: string; // ISO date string
@@ -36,6 +36,7 @@ export interface Application {
     reason: string;
     score?: number; // Optional: if AI provides a score
   };
+  resumeUrl?: string; // Added to hold resume filename for admin view
 }
 
 export interface PipelineStage {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Application, Pipeline, Job } from "@/types";
@@ -5,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Eye, Bot } from "lucide-react";
+import { Eye, Bot, Download } from "lucide-react"; // Added Download icon
 import Link from "next/link";
 import { updateApplicationStage } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +37,16 @@ export function ApplicantListTable({ job, applications, pipeline, onStageChange 
       });
     }
   };
+
+  const handleViewResume = (resumeUrl?: string) => {
+    if (resumeUrl) {
+      // In a real app, this would trigger a download or open the resume.
+      // For mock, we'll just alert the filename.
+      alert(`Resume file: ${resumeUrl}\n(Actual download/view functionality is not implemented in this mock environment.)`);
+    } else {
+      alert("No resume file available for this applicant.");
+    }
+  };
   
   if (applications.length === 0) {
     return <p className="text-muted-foreground text-center py-4">No applicants for this job yet.</p>;
@@ -48,6 +59,7 @@ export function ApplicantListTable({ job, applications, pipeline, onStageChange 
           <TableHead>Applicant Name</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Applied On</TableHead>
+          <TableHead>Resume</TableHead> {/* Added Resume column */}
           <TableHead>Current Stage</TableHead>
           <TableHead>AI Screen</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -59,6 +71,15 @@ export function ApplicantListTable({ job, applications, pipeline, onStageChange 
             <TableCell className="font-medium">{app.applicantName}</TableCell>
             <TableCell>{app.applicantEmail}</TableCell>
             <TableCell>{new Date(app.submissionDate).toLocaleDateString()}</TableCell>
+            <TableCell>
+              {app.resumeUrl ? (
+                <Button variant="outline" size="sm" onClick={() => handleViewResume(app.resumeUrl)}>
+                  <Download className="mr-2 h-4 w-4" /> View
+                </Button>
+              ) : (
+                <span className="text-xs text-muted-foreground">N/A</span>
+              )}
+            </TableCell>
             <TableCell>
               {pipeline ? (
                 <Select

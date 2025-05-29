@@ -26,7 +26,8 @@ const profileFormSchema = z.object({
   email: z.string().email("Invalid email address."), // Email typically not editable or requires verification
   phone: z.string().optional(),
   resumeText: z.string().optional(),
-  coverLetter: z.string().optional(),
+  resumeUrl: z.string().optional(), // For storing resume filename/url
+  // coverLetter: z.string().optional(), // Removed
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -44,17 +45,16 @@ export function UserProfileForm({ user }: UserProfileFormProps) {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: user.name || "",
-      email: user.email || "", // Display but typically not editable here
+      email: user.email || "", 
       phone: user.phone || "",
       resumeText: user.resumeText || "",
-      coverLetter: user.coverLetter || "",
+      resumeUrl: user.resumeUrl || "",
+      // coverLetter: user.coverLetter || "", // Removed
     },
   });
 
   async function onSubmit(values: ProfileFormValues) {
     setIsLoading(true);
-    // Note: Email is part of the form but we're not allowing its update here for simplicity.
-    // A real app would handle email changes with verification.
     const { email, ...updateData } = values; 
     const updatedUser = await updateProfile(user.id, updateData);
     setIsLoading(false);
@@ -64,6 +64,8 @@ export function UserProfileForm({ user }: UserProfileFormProps) {
         title: "Profile Updated!",
         description: "Your profile information has been saved.",
       });
+      // Optionally re-sync form with potentially new data from context if it updates separately
+      // form.reset(updatedUser); // Or specific fields
     } else {
       toast({
         title: "Update Failed",
@@ -116,6 +118,21 @@ export function UserProfileForm({ user }: UserProfileFormProps) {
             </FormItem>
           )}
         />
+        {/* We could add a field to upload/manage resumeUrl here, but keeping it simple for now */}
+        {/* <FormField
+          control={form.control}
+          name="resumeUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Resume File (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="your_resume.pdf" {...field} />
+              </FormControl>
+              <FormDescription>Name of your uploaded resume file.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        /> */}
         <FormField
           control={form.control}
           name="resumeText"
@@ -133,23 +150,7 @@ export function UserProfileForm({ user }: UserProfileFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="coverLetter"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Default Cover Letter (Optional)</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Your generic cover letter template..."
-                  className="min-h-[120px]"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {/* Cover Letter Field Removed */}
         <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           Save Changes
